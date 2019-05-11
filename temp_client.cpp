@@ -17,6 +17,59 @@ void error(const char *msg)
     exit(0);
 }
 
+void split_page(std::string response)
+{
+    std::string header;
+    std::string page;
+    int index = 0;
+    bool found = false;
+
+    while(true)
+    {
+        if(response[index] == '\r'){
+            if(response[index + 1] == '\n'){
+                if(response[index + 2] == '\r'){
+                    if(response[index + 3] == '\n'){
+                        break;
+                    }
+                }
+            }
+        }
+        index++;
+    }
+
+    index+=4;
+    for(int i = index; i < response.length(); i++)
+    {
+        std::cout << response[i];
+    }
+}
+
+std::string get_entire_response(int sockfd)
+{
+    std::string page;
+    int BUFFER_SIZE = 256;
+    char buffer[BUFFER_SIZE];
+    bool keep_reading = true;
+    int n;
+
+    while(keep_reading)
+    {
+        std::fill_n(buffer, BUFFER_SIZE, '\0');
+        n = recv(sockfd, buffer, BUFFER_SIZE, 0);
+
+        if(n <= 0)
+        {
+            keep_reading = false;
+        }
+        
+        page.append(buffer);
+    }
+    close(sockfd);
+
+    return page;
+}
+
 int main(int argc, char *argv[])
 {
     int sockfd, portno, n;
@@ -24,14 +77,9 @@ int main(int argc, char *argv[])
     struct hostent *server;
     int bytes_read;
 
-    std::string req = "GET /~carey/CPSC441/test0.txt HTTP/1.1\r\nHost: pages.cpsc.ucalgary.ca\r\n\r\n";
+    std::string req = "GET /~carey/CPSC441/checklist.txt HTTP/1.1\r\nHost: pages.cpsc.ucalgary.ca\r\n\r\n";
     std::string hostname = "pages.cpsc.ucalgary.ca";
 
-    for(int i = 0; i < req.size(); i++)
-    {
-        std::cout << req[i];
-    }
-    // exit(0);
     portno = 80;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
@@ -54,17 +102,11 @@ int main(int argc, char *argv[])
     if (n < 0)
         error("ERROR writing to socket");
 
-    char buffer[300];
-    bool keep_reading = true;
-    while(keep_reading)
-    {
-        bzero(buffer,300);
-        n = read(sockfd,buffer,300);
+    std::string page = get_entire_response(sockfd);
 
-        if (n < 300)
-            keep_reading = false;
-        printf("%s",buffer);
-    }
-    close(sockfd);
+    std::cout << page;
+    // split_page(page);
+
     return 0;
 }
+
