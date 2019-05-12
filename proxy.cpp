@@ -64,7 +64,42 @@ std::string get_hostname(std::string request)
 
     return hostname;
 }
+
+std::string forward_request(std::string request)
+{
+    int sockfd, portno, n;
+    struct sockaddr_in serv_addr;
+    struct hostent *server;
+    int bytes_read;
+    
+    std::string hostname = get_hostname(request);
+
+    portno = 80;
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+        exit(1);
+    server = gethostbyname(hostname.c_str());
+    if (server == NULL) {
+        fprintf(stderr,"ERROR, no such host\n");
+        exit(0);
+    }
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr,
+         (char *)&serv_addr.sin_addr.s_addr,
+         server->h_length);
+    serv_addr.sin_port = htons(portno);
+    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
+        exit(1);
+
+    n = write(sockfd, request.c_str(), request.size());
+    if (n < 0)
+        exit(1); 
+
+    std::string page = get_entire_response(sockfd);
+
     return page;
+
 }
 
 void *process_request(void *input_params)
@@ -77,10 +112,15 @@ void *process_request(void *input_params)
 
     std::string request = get_entire_response(params->sockfd);
 
+    std::string response = forward_request(request);
+
+    std::cout << response;
     
     send(socket_num ,hello ,strlen(hello) ,0);
 
     close(socket_num);
+
+    printf("request finished processing");
     pthread_exit(NULL);
 }
 
@@ -143,7 +183,6 @@ void server_loop(int port_number)
         //do shit
         //printf("%s\n",buffer );
 
-        printf("Hello message sent\n");
     }
 }
 
@@ -151,5 +190,7 @@ int main(int argc, char const *argv[])
 {
     server_loop(PORT);
 
+    // std::string request = "GET http://pages.cpsc.ucalgary.ca/~carey/CPSC441/test0.txt HTTP/1.1\r\nHost: pages.cpsc.ucalgary.ca\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nProxy-Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\nCookie: _sp_id.380f=6bea5a35-08cf-4245-8edc-0387522d5d94.1556125066.2.1556127439.1556125070.05a23909-5046-47c5-8942-3000a36f9f83; _ga=GA1.2.1636950954.1542124169; SESS6d24f8c3128c44e21d79dbb73757f0ef=vnmd845bek9prdlvtar979t1g4\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.2 Safari/605.1.15\r\nAccept-Language: en-ca\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n";
+    // forward_request(request);
     return 0;
 }
