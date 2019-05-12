@@ -30,17 +30,18 @@ std::string get_entire_response(int sockfd)
     {
         std::fill_n(buffer, BUFFER_SIZE, '\0');
 
-        n = recv(sockfd, buffer, BUFFER_SIZE, 0);
-        std::cout << n << "\n";
+        n = recv(sockfd, buffer, BUFFER_SIZE - 1, 0);
 
-        // if(n <= 0)
-        // {
+        if(n <= 0 || buffer[n] == '\0')
+        {
             keep_reading = false;
-        // }
+        }
         
         page.append(buffer);
     }
-    std::cout << "test\n";
+    return page;
+}
+
 std::string get_hostname(std::string request)
 {
     const char *find_text = "Host:";
