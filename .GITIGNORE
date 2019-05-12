@@ -1,1 +1,5 @@
 .vscode
+client
+server
+proxy
+a.out
