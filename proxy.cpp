@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -40,6 +41,28 @@ std::string get_entire_response(int sockfd)
         page.append(buffer);
     }
     std::cout << "test\n";
+std::string get_hostname(std::string request)
+{
+    const char *find_text = "Host:";
+    size_t host_pos;
+    std::string hostname;
+
+    host_pos = request.find(find_text);
+    for(int i = host_pos+5; i < request.length(); i++)
+    {
+        if(request[i] == '\n' || request[i] == '\r')
+        {
+            break;
+        }
+
+        if(request[i] != ' ')
+        {
+            hostname.append(std::string(1, request[i]));
+        }
+    }
+
+    return hostname;
+}
     return page;
 }
 
