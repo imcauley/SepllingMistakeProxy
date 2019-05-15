@@ -42,13 +42,14 @@ std::string get_entire_response(int sockfd)
     return page;
 }
 
-std::string get_hostname(std::string request)
+std::string get_feature(std::string request, std::string field_name)
 {
-    const char *find_text = "Host:";
+    std::string field = field_name;
+    field.append(":");
     size_t host_pos;
     std::string hostname;
 
-    host_pos = request.find(find_text);
+    host_pos = request.find(field.c_str());
     for(int i = host_pos+5; i < request.length(); i++)
     {
         if(request[i] == '\n' || request[i] == '\r')
@@ -72,12 +73,14 @@ std::string forward_request(std::string request)
     struct hostent *server;
     int bytes_read;
     
-    std::string hostname = get_hostname(request);
+    std::string hostname = get_feature(request, "Host");
 
     portno = 80;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
     if (sockfd < 0)
         exit(1);
+
     server = gethostbyname(hostname.c_str());
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
