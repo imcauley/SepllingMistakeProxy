@@ -118,6 +118,40 @@ void split_request(std::string response, std::string *header, std::string *conte
         content->append(std::string(1, response[i]));
     }
 }
+
+std::string modify_response(std::string response)
+{
+    std::string page_type = get_feature(response, "Content-Type");
+
+    std::string header;
+    std::string content;
+
+    split_request(response, &header, &content);
+
+    if(page_type.find("plain") != std::string::npos)
+    {
+        for(int i = 0; i < content.length(); i++)
+        {   
+            char current = content[i];
+            if(current >= 'a' && current < 'z')
+            {
+                if((rand() % 20 + 1) == 2)
+                {
+                    content[i]++;
+                }
+            }
+        }
+    }
+
+    if(page_type.find("html") != std::string::npos)
+    {
+        std::cout << content << "\r\n\r\n";
+    }
+
+    header.append("\r\n\r\n");
+    header.append(content);
+    return header;
+}
 {
     const char *hello = "HTTP/1.1 200 OK\n\nHello from server\n";
 
