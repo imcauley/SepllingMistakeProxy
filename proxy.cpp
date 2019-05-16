@@ -133,10 +133,8 @@ std::string modify_response(std::string response)
         for(int i = 0; i < content.length(); i++)
         {   
             char current = content[i];
-            if(current >= 'a' && current < 'z')
-            {
-                if((rand() % 20 + 1) == 2)
-                {
+            if(current >= 'a' && current < 'z') {
+                if((rand() % 20 + 1) == 2) {
                     content[i]++;
                 }
             }
@@ -145,6 +143,52 @@ std::string modify_response(std::string response)
 
     if(page_type.find("html") != std::string::npos)
     {
+        std::string new_content;
+        int body_start = content.find("<body>");
+        bool in_tag;
+        bool spell_word_wrong;
+
+        if(body_start != std::string::npos)
+        {
+            body_start += 6;
+
+            for(int i = 0; i < body_start; i++) {
+                new_content.append(std::string(1,content[i]));
+            }
+
+            for(int i = body_start; i < content.length(); i++)
+            {
+                if(content[i] == '<') {
+                    in_tag = true;
+                }
+
+                if(!in_tag)
+                {
+                    if(content[i] == ' ') {
+                        if(spell_word_wrong) {
+                            new_content.append("</b>");
+                            spell_word_wrong = false;
+                        }
+                        else{
+                            if((rand() % 20 + 1) == 2) {
+                                spell_word_wrong = true;
+                                new_content.append("<b>");
+                            }
+                            else {
+                                spell_word_wrong = false;
+                            }
+                        }
+                    }
+                }
+
+                if(content[i] == '>') {
+                    in_tag = false;
+                }
+
+                new_content.append(std::string(1,content[i]));
+            }
+        }
+        content = new_content;
         std::cout << content << "\r\n\r\n";
     }
 
