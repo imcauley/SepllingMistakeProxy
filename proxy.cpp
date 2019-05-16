@@ -105,7 +105,19 @@ std::string forward_request(std::string request)
 
 }
 
-void *process_request(void *input_params)
+void split_request(std::string response, std::string *header, std::string *content)
+{
+    int split_pos = response.find("\r\n\r\n");
+
+    for(int i = 0; i < split_pos; i++)
+    {
+        header->append(std::string(1, response[i]));
+    }
+    for(int i = split_pos + 4; i < response.length(); i++)
+    {
+        content->append(std::string(1, response[i]));
+    }
+}
 {
     const char *hello = "HTTP/1.1 200 OK\n\nHello from server\n";
 
