@@ -152,10 +152,9 @@ std::string modify_response(std::string response)
     header.append(content);
     return header;
 }
+
+void *process_request(void *input_params)
 {
-    const char *hello = "HTTP/1.1 200 OK\n\nHello from server\n";
-
-
     Request *params = (Request*) input_params;
     int socket_num = params->sockfd;
 
@@ -163,13 +162,13 @@ std::string modify_response(std::string response)
 
     std::string response = forward_request(request);
 
-    std::cout << response;
-    
-    send(socket_num ,hello ,strlen(hello) ,0);
+    response = modify_response(response);
+
+    send(socket_num, response.c_str(), response.length() ,0);
 
     close(socket_num);
 
-    printf("request finished processing");
+    printf("request finished processing\n");
     pthread_exit(NULL);
 }
 
