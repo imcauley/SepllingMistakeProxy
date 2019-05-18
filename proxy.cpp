@@ -70,15 +70,12 @@ std::string get_feature(std::string request, std::string field_name)
     std::string hostname;
 
     host_pos = request.find(field.c_str());
-    for(int i = host_pos+5; i < request.length(); i++)
-    {
-        if(request[i] == '\n' || request[i] == '\r')
-        {
+    for(int i = host_pos+5; i < request.length(); i++) {
+        if(request[i] == '\n' || request[i] == '\r') {
             break;
         }
 
-        if(request[i] != ' ')
-        {
+        if(request[i] != ' ') {
             hostname.append(std::string(1, request[i]));
         }
     }
@@ -122,19 +119,16 @@ std::string forward_request(std::string request)
     std::string page = get_entire_response(sockfd);
 
     return page;
-
 }
 
 void split_request(std::string response, std::string *header, std::string *content)
 {
     int split_pos = response.find("\r\n\r\n");
 
-    for(int i = 0; i < split_pos; i++)
-    {
+    for(int i = 0; i < split_pos; i++) {
         header->append(std::string(1, response[i]));
     }
-    for(int i = split_pos + 4; i < response.length(); i++)
-    {
+    for(int i = split_pos + 4; i < response.length(); i++) {
         content->append(std::string(1, response[i]));
     }
 }
@@ -148,10 +142,8 @@ std::string modify_response(std::string response)
 
     split_request(response, &header, &content);
 
-    if(page_type.find("plain") != std::string::npos)
-    {
-        for(int i = 0; i < content.length(); i++)
-        {   
+    if(page_type.find("plain") != std::string::npos) {
+        for(int i = 0; i < content.length(); i++) {
             char current = content[i];
             if(current >= 'a' && current < 'z') {
                 if((rand() % 20 + 1) == 2) {
@@ -161,29 +153,26 @@ std::string modify_response(std::string response)
         }
     }
 
-    if(page_type.find("html") != std::string::npos)
-    {
+    if(page_type.find("html") != std::string::npos) {
         std::string new_content;
         int body_start = content.find("<body>");
+        int body_end = content.find("</body>");
         bool in_tag;
         bool spell_word_wrong;
 
-        if(body_start != std::string::npos)
-        {
+        if(body_start != std::string::npos) {
             body_start += 6;
 
             for(int i = 0; i < body_start; i++) {
                 new_content.append(std::string(1,content[i]));
             }
 
-            for(int i = body_start; i < content.length(); i++)
-            {
+            for(int i = body_start; i < body_end; i++) {
                 if(content[i] == '<') {
                     in_tag = true;
                 }
 
-                if(!in_tag)
-                {
+                if(!in_tag) {
                     if(content[i] == ' ') {
                         if(spell_word_wrong) {
                             new_content.append("</b>");
@@ -207,9 +196,13 @@ std::string modify_response(std::string response)
 
                 new_content.append(std::string(1,content[i]));
             }
+
+            for(int i = body_end; i < content.length(); i++) {
+                new_content.append(std::string(1,content[i]));
+            }
         }
         content = new_content;
-        std::cout << content << "\r\n\r\n";
+        header = modify_feature(header, "Content-Length", std::to_string(content.length()));
     }
 
     header.append("\r\n\r\n");
