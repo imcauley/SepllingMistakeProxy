@@ -41,6 +41,27 @@ std::string get_entire_response(int sockfd)
     return page;
 }
 
+std::string modify_feature(std::string request, std::string field_name, std::string value)
+{
+    std::string new_request;
+    std::string field = field_name;
+    field.append(":");
+
+    int feature_pos = request.find(field.c_str()) + field_name.length() + 1;
+
+    for(int i = 0; i < feature_pos; i++) {
+        new_request.append(std::string(1, request[i]));
+    }
+    new_request.append(" ");
+    new_request.append(value);
+    new_request.append("\r\n");
+    for(int i = feature_pos; i < request.length(); i++) {
+        new_request.append(std::string(1, request[i]));
+    }
+
+    return new_request;
+}
+
 std::string get_feature(std::string request, std::string field_name)
 {
     std::string field = field_name;
