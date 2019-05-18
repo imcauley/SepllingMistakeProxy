@@ -91,8 +91,18 @@ std::string forward_request(std::string request)
     int bytes_read;
     
     std::string hostname = get_feature(request, "Host");
+    int port_pos = hostname.find(':');
 
-    portno = 80;
+    if(port_pos == std::string::npos) {
+        portno = 80;
+    } else {
+        portno = std::stoi(hostname.substr(port_pos+1, hostname.length()));
+        hostname = hostname.substr(0, port_pos);
+    }
+
+    std::cout << hostname << "\n";
+
+    
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0)
@@ -155,51 +165,42 @@ std::string modify_response(std::string response)
 
     if(page_type.find("html") != std::string::npos) {
         std::string new_content;
-        int body_start = content.find("<body>");
-        int body_end = content.find("</body>");
         bool in_tag;
         bool spell_word_wrong;
 
-        if(body_start != std::string::npos) {
-            body_start += 6;
-
-            for(int i = 0; i < body_start; i++) {
-                new_content.append(std::string(1,content[i]));
+        for(int i = 0; i < content.length(); i++) {
+            if(content[i] == '<') {
+                in_tag = true;
             }
 
-            for(int i = body_start; i < body_end; i++) {
-                if(content[i] == '<') {
-                    in_tag = true;
-                }
-
-                if(!in_tag) {
-                    if(content[i] == ' ') {
-                        if(spell_word_wrong) {
-                            new_content.append("</b>");
-                            spell_word_wrong = false;
+            if(!in_tag) {
+                if(content[i] == ' ') {
+                    if(spell_word_wrong) {
+                        new_content.append("</b>");
+                        spell_word_wrong = false;
+                    }
+                    else{
+                        if((rand() % 20 + 1) == 2) {
+                            spell_word_wrong = true;
+                            new_content.append("<b>");
                         }
-                        else{
-                            if((rand() % 20 + 1) == 2) {
-                                spell_word_wrong = true;
-                                new_content.append("<b>");
-                            }
-                            else {
-                                spell_word_wrong = false;
-                            }
+                        else {
+                            spell_word_wrong = false;
                         }
                     }
                 }
-
-                if(content[i] == '>') {
-                    in_tag = false;
-                }
-
-                new_content.append(std::string(1,content[i]));
             }
 
-            for(int i = body_end; i < content.length(); i++) {
-                new_content.append(std::string(1,content[i]));
+            if(content[i] == '>') {
+                in_tag = false;
             }
+
+            char next = content[i];
+            if(spell_word_wrong && next >= 'a' && next <= 'z') {
+                next++;
+            }
+            new_content.append(std::string(1,next));
+           
         }
         content = new_content;
         header = modify_feature(header, "Content-Length", std::to_string(content.length()));
@@ -222,7 +223,7 @@ void *process_request(void *input_params)
 
     std::string response = forward_request(request);
 
-    // response = modify_response(response);
+    response = modify_response(response);
 
     send(params->sockfd, response.c_str(), response.length() ,0);
 
@@ -238,8 +239,6 @@ void server_loop(int port_number)
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
-    char buffer[1024] = {0};
-    char hello[] = "HTTP/1.1 200 OK\n\nHello from server";
 
     // Creating socket file descriptor
     if ((serverfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
