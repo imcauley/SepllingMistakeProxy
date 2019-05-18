@@ -22,22 +22,21 @@ std::string get_entire_response(int sockfd)
     std::string page;
     int BUFFER_SIZE = 2048;
     char buffer[BUFFER_SIZE];
-    bool keep_reading = true;
+
     int n;
+    bool keep_reading = true;
 
 
-    while(keep_reading)
-    {
+    while(keep_reading) {
         std::fill_n(buffer, BUFFER_SIZE, '\0');
 
-        n = recv(sockfd, buffer, BUFFER_SIZE - 1, 0);
+        n = read(sockfd, buffer, BUFFER_SIZE);
 
-        if(n <= 0 || buffer[n] == '\0')
-        {
+        if(n <= 0) {
             keep_reading = false;
         }
         
-        page.append(buffer);
+        page.append(buffer, 0, n);
     }
     return page;
 }
@@ -202,15 +201,18 @@ void *process_request(void *input_params)
     Request *params = (Request*) input_params;
     int socket_num = params->sockfd;
 
-    std::string request = get_entire_response(params->sockfd);
+    int req_size = 2048;
+    char request[req_size];
+
+    read(params->sockfd, request, req_size);
 
     std::string response = forward_request(request);
 
-    response = modify_response(response);
+    // response = modify_response(response);
 
-    send(socket_num, response.c_str(), response.length() ,0);
+    send(params->sockfd, response.c_str(), response.length() ,0);
 
-    close(socket_num);
+    close(params->sockfd);
 
     printf("request finished processing\n");
     pthread_exit(NULL);
