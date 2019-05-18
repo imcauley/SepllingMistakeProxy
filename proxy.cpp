@@ -242,15 +242,13 @@ void server_loop(int port_number)
     char hello[] = "HTTP/1.1 200 OK\n\nHello from server";
 
     // Creating socket file descriptor
-    if ((serverfd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-    {
+    if ((serverfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
     // Forcefully attaching socket to the port 8080
-    if (setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
-    {
+    if (setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
@@ -259,22 +257,18 @@ void server_loop(int port_number)
     address.sin_port = htons(port_number);
 
     // Forcefully attaching socket to the port 8080
-    if (bind(serverfd, (struct sockaddr *)&address, sizeof(address))<0)
-    {
+    if (bind(serverfd, (struct sockaddr *)&address, sizeof(address))<0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
 
-    if (listen(serverfd, 3) < 0)
-    {
+    if (listen(serverfd, 3) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
 
-    while(1)
-    {
-        if ((new_socket = accept(serverfd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-        {
+    while(1) {
+        if ((new_socket = accept(serverfd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
             perror("accept");
             exit(EXIT_FAILURE);
         }
